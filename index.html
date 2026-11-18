@@ -1,0 +1,2210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>염창초등학교 특별실 예약</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe2ea;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --after-school: #fff7d6;
+      --blocked: #ffe4e6;
+      --reserved: #dbeafe;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family:
+        "Pretendard",
+        "Noto Sans KR",
+        Arial,
+        sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .container {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    header {
+      color: white;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      border-radius: 18px;
+      background: white;
+      padding: 4px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(22px, 4vw, 34px);
+    }
+
+    .brand p {
+      margin: 6px 0 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .admin-button {
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: white;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    main {
+      padding: 24px 0 50px;
+    }
+
+    .notice {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      color: #1e3a8a;
+      background: #eff6ff;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: 0 5px 18px rgba(30, 64, 175, 0.06);
+    }
+
+    .card-header {
+      padding: 18px 20px 10px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .card-body {
+      padding: 16px 20px 20px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      padding: 10px 11px;
+      color: var(--text);
+      background: white;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.14);
+      border-color: var(--primary);
+    }
+
+    textarea {
+      min-height: 75px;
+      resize: vertical;
+    }
+
+    .help-text {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .danger-button {
+      width: 100%;
+      border: 0;
+      border-radius: 9px;
+      padding: 12px 14px;
+      font-weight: 700;
+    }
+
+    .primary-button {
+      color: white;
+      background: var(--primary);
+    }
+
+    .primary-button:hover {
+      background: var(--primary-dark);
+    }
+
+    .secondary-button {
+      color: #1e40af;
+      background: #dbeafe;
+    }
+
+    .danger-button {
+      color: white;
+      background: var(--danger);
+    }
+
+    .schedule-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .schedule-toolbar h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .week-button {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      background: white;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th,
+    td {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 8px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    th {
+      color: #334155;
+      background: #f8fafc;
+      font-weight: 800;
+    }
+
+    .period-cell {
+      width: 74px;
+      color: #475569;
+      background: #f8fafc;
+      font-weight: 700;
+    }
+
+    .after-school-cell {
+      background: var(--after-school);
+    }
+
+    .slot {
+      min-height: 68px;
+      border: 0;
+      border-radius: 8px;
+      padding: 7px;
+      text-align: left;
+      line-height: 1.35;
+      font-size: 12px;
+    }
+
+    button.slot {
+      width: 100%;
+      color: #1e3a8a;
+      background: var(--reserved);
+    }
+
+    button.slot:hover {
+      outline: 2px solid var(--primary);
+    }
+
+    .empty-slot {
+      color: #64748b;
+      background: #f8fafc;
+    }
+
+    .blocked-slot {
+      color: #991b1b;
+      background: var(--blocked);
+    }
+
+    .slot strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 12px;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .legend-empty {
+      background: #f8fafc;
+    }
+
+    .legend-reserved {
+      background: var(--reserved);
+    }
+
+    .legend-blocked {
+      background: var(--blocked);
+    }
+
+    .legend-after-school {
+      background: var(--after-school);
+    }
+
+    .reservation-list {
+      margin-top: 20px;
+    }
+
+    .reservation-list h2 {
+      font-size: 18px;
+    }
+
+    .reservation-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .reservation-item:last-child {
+      border-bottom: 0;
+    }
+
+    .reservation-info {
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .reservation-info strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .small-danger {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 7px;
+      padding: 7px 9px;
+      color: white;
+      background: var(--danger);
+      font-size: 12px;
+    }
+
+    .empty-message {
+      padding: 20px 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.56);
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(480px, 100%);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      border-radius: 16px;
+      background: white;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .close-button {
+      border: 0;
+      color: #64748b;
+      background: transparent;
+      font-size: 24px;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .success-character {
+      display: block;
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      margin: 0 auto 14px;
+    }
+
+    .success-message {
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .admin-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .admin-section h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .blocked-admin-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .blocked-admin-item:last-child {
+      border-bottom: 0;
+    }
+
+    .message {
+      display: none;
+      margin-bottom: 14px;
+      padding: 11px 13px;
+      border-radius: 9px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .message.success {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .form-card {
+        order: 1;
+      }
+
+      .schedule-card {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .container {
+        width: min(100% - 20px, 1200px);
+      }
+
+      .header-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .brand-icon {
+        width: 58px;
+        height: 58px;
+      }
+
+      main {
+        padding-top: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="brand">
+        <img
+          src="school-character.png"
+          alt="염창초등학교 캐릭터"
+          class="brand-icon"
+        />
+
+        <div>
+          <h1>염창초등학교 특별실 예약</h1>
+          <p>선생님을 위한 간편한 특별실 예약 시스템</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="admin-button"
+        id="adminButton"
+      >
+        관리자
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="notice">
+      오늘부터 3개월 후까지 예약할 수 있습니다.
+      예약 취소에는 예약할 때 입력한 4자리 PIN이 필요합니다.
+      과거 날짜와 관리자 차단 시간은 예약할 수 없습니다.
+    </div>
+
+    <div
+      id="globalMessage"
+      class="message"
+    ></div>
+
+    <div class="layout">
+      <section class="card form-card">
+        <div class="card-header">
+          <h2>예약 등록</h2>
+        </div>
+
+        <div class="card-body">
+          <form id="reservationForm">
+            <div class="form-group">
+              <label for="roomId">특별실</label>
+              <select id="roomId" required>
+                <option value="">특별실을 선택하세요</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="reservationDate">예약 날짜</label>
+              <input
+                type="date"
+                id="reservationDate"
+                required
+              />
+              <div class="help-text">
+                오늘부터 3개월 후까지 선택할 수 있습니다.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="period">교시</label>
+              <select id="period" required>
+                <option value="">교시를 선택하세요</option>
+                <option value="1">1교시</option>
+                <option value="2">2교시</option>
+                <option value="3">3교시</option>
+                <option value="4">4교시</option>
+                <option value="5">5교시</option>
+                <option value="6">6교시</option>
+                <option value="7">방과후(7교시)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="teacherName">교사 이름</label>
+              <input
+                type="text"
+                id="teacherName"
+                maxlength="30"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="grade">학년</label>
+              <select id="grade" required>
+                <option value="">학년을 선택하세요</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+                <option value="4">4학년</option>
+                <option value="5">5학년</option>
+                <option value="6">6학년</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="className">반</label>
+              <input
+                type="text"
+                id="className"
+                maxlength="20"
+                placeholder="예: 1반"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="purpose">사용 목적</label>
+              <textarea
+                id="purpose"
+                maxlength="100"
+                placeholder="예: 과학 수업"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="cancelPin">취소용 PIN 4자리</label>
+              <input
+                type="password"
+                id="cancelPin"
+                inputmode="numeric"
+                pattern="[0-9]{4}"
+                maxlength="4"
+                autocomplete="new-password"
+                placeholder="숫자 4자리"
+                required
+              />
+
+              <div class="help-text">
+                예약 취소 때 필요합니다. 숫자 4자리를 입력하세요.
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              class="primary-button"
+            >
+              예약하기
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section class="card schedule-card">
+        <div class="card-header">
+          <div class="schedule-toolbar">
+            <h2 id="weekTitle">주간 예약 현황</h2>
+
+            <button
+              type="button"
+              class="week-button"
+              id="todayButton"
+            >
+              오늘
+            </button>
+          </div>
+
+          <div id="selectedRoomText">
+            특별실을 선택하면 주간 예약 현황이 표시됩니다.
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>교시</th>
+                  <th>월요일</th>
+                  <th>화요일</th>
+                  <th>수요일</th>
+                  <th>목요일</th>
+                  <th>금요일</th>
+                </tr>
+              </thead>
+
+              <tbody id="scheduleBody"></tbody>
+            </table>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-color legend-empty"></span>
+              예약 가능
+            </div>
+
+            <div class="legend-item">
+              <span class="legend-color legend-reserved"></span>
+              예약됨
+            </div>
+
+            <div class="legend-item">
+              <span class="legend-color legend-blocked"></span>
+              예약 차단
+            </div>
+
+            <div class="legend-item">
+              <span class="legend-color legend-after-school"></span>
+              정규수업이 없는 시간
+            </div>
+          </div>
+
+          <div class="reservation-list">
+            <h2>선택한 날짜의 예약 목록</h2>
+            <div id="reservationList"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div
+    class="modal-backdrop"
+    id="successModal"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <h2>예약 완료</h2>
+
+        <button
+          type="button"
+          class="close-button"
+          data-close-modal="successModal"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <img
+          src="school-character.png"
+          alt="예약 완료 캐릭터"
+          class="success-character"
+        />
+
+        <div
+          class="success-message"
+          id="successText"
+        ></div>
+
+        <br />
+
+        <button
+          type="button"
+          class="primary-button"
+          data-close-modal="successModal"
+        >
+          확인
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="modal-backdrop"
+    id="adminModal"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <h2>관리자 차단 시간 관리</h2>
+
+        <button
+          type="button"
+          class="close-button"
+          data-close-modal="adminModal"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="admin-section">
+          <h3>관리자 인증</h3>
+
+          <div class="form-group">
+            <label for="adminPin">관리자 PIN</label>
+            <input
+              type="password"
+              id="adminPin"
+              inputmode="numeric"
+              maxlength="4"
+              placeholder="관리자 PIN 4자리"
+            />
+          </div>
+
+          <button
+            type="button"
+            class="secondary-button"
+            id="adminLoginButton"
+          >
+            관리자 인증
+          </button>
+
+          <div
+            class="help-text"
+            id="adminStatus"
+          >
+            관리자 인증 후 차단 시간을 관리할 수 있습니다.
+          </div>
+        </div>
+
+        <div
+          class="admin-section"
+          id="adminControls"
+          style="display: none;"
+        >
+          <h3>예약 차단 등록</h3>
+
+          <div class="form-group">
+            <label for="blockedRoomId">특별실</label>
+            <select id="blockedRoomId"></select>
+          </div>
+
+          <div class="form-group">
+            <label for="blockedDate">날짜</label>
+            <input
+              type="date"
+              id="blockedDate"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="blockedPeriod">교시</label>
+            <select id="blockedPeriod">
+              <option value="1">1교시</option>
+              <option value="2">2교시</option>
+              <option value="3">3교시</option>
+              <option value="4">4교시</option>
+              <option value="5">5교시</option>
+              <option value="6">6교시</option>
+              <option value="7">방과후(7교시)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="blockedReason">차단 사유</label>
+            <input
+              type="text"
+              id="blockedReason"
+              maxlength="100"
+              placeholder="예: 학교 행사, 시설 점검"
+            />
+          </div>
+
+          <button
+            type="button"
+            class="primary-button"
+            id="addBlockedSlotButton"
+          >
+            예약 차단 등록
+          </button>
+        </div>
+
+        <div
+          class="admin-section"
+          id="blockedListSection"
+          style="display: none;"
+        >
+          <h3>등록된 차단 시간</h3>
+          <div id="blockedList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL =
+      "https://kadxkspfbqimmcgylunx.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_rCwUoH1V4AQJxjTKA4Umvg_s1LrULRq";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+    const ADMIN_PIN = "0492";
+
+    const state = {
+      rooms: [],
+      reservations: [],
+      blockedSlots: [],
+      selectedRoomId: "",
+      selectedDate: getTodayString(),
+      isAdmin: false
+    };
+
+    const roomSelect =
+      document.getElementById("roomId");
+
+    const dateInput =
+      document.getElementById("reservationDate");
+
+    const scheduleBody =
+      document.getElementById("scheduleBody");
+
+    const reservationList =
+      document.getElementById("reservationList");
+
+    const selectedRoomText =
+      document.getElementById("selectedRoomText");
+
+    const globalMessage =
+      document.getElementById("globalMessage");
+
+    const blockedDateInput =
+      document.getElementById("blockedDate");
+
+    /*
+      예약 가능 날짜를 오늘부터 3개월 후까지 설정합니다.
+    */
+    dateInput.min = getTodayString();
+    dateInput.max = getThreeMonthsLaterString();
+    dateInput.value = getTodayString();
+
+    /*
+      관리자 차단 가능 날짜도 오늘부터 3개월 후까지 설정합니다.
+    */
+    blockedDateInput.min = getTodayString();
+    blockedDateInput.max = getThreeMonthsLaterString();
+    blockedDateInput.value = getTodayString();
+
+    document
+      .getElementById("reservationForm")
+      .addEventListener(
+        "submit",
+        handleReservationSubmit
+      );
+
+    roomSelect.addEventListener(
+      "change",
+      async () => {
+        state.selectedRoomId = roomSelect.value;
+
+        await loadReservationsAndBlockedSlots();
+
+        renderSchedule();
+        renderReservationList();
+      }
+    );
+
+    dateInput.addEventListener(
+      "change",
+      async () => {
+        const today =
+          getTodayString();
+
+        const threeMonthsLater =
+          getThreeMonthsLaterString();
+
+        if (dateInput.value < today) {
+          showMessage(
+            "과거 날짜는 선택할 수 없습니다.",
+            "error"
+          );
+
+          dateInput.value = today;
+        }
+
+        if (dateInput.value > threeMonthsLater) {
+          showMessage(
+            "예약은 3개월 후까지 가능합니다.",
+            "error"
+          );
+
+          dateInput.value = threeMonthsLater;
+        }
+
+        state.selectedDate =
+          dateInput.value;
+
+        await loadReservationsAndBlockedSlots();
+
+        renderSchedule();
+        renderReservationList();
+      }
+    );
+
+    document
+      .getElementById("todayButton")
+      .addEventListener(
+        "click",
+        async () => {
+          dateInput.value =
+            getTodayString();
+
+          state.selectedDate =
+            dateInput.value;
+
+          await loadReservationsAndBlockedSlots();
+
+          renderSchedule();
+          renderReservationList();
+        }
+      );
+
+    document
+      .getElementById("adminButton")
+      .addEventListener(
+        "click",
+        () => {
+          openModal("adminModal");
+        }
+      );
+
+    document
+      .getElementById("adminLoginButton")
+      .addEventListener(
+        "click",
+        handleAdminLogin
+      );
+
+    document
+      .getElementById("addBlockedSlotButton")
+      .addEventListener(
+        "click",
+        handleAddBlockedSlot
+      );
+
+    document
+      .querySelectorAll("[data-close-modal]")
+      .forEach((button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            closeModal(
+              button.dataset.closeModal
+            );
+          }
+        );
+      });
+
+    async function initialize() {
+      try {
+        await loadRooms();
+        await loadReservationsAndBlockedSlots();
+
+        renderSchedule();
+        renderReservationList();
+      } catch (error) {
+        console.error(error);
+
+        showMessage(
+          "초기 데이터를 불러오는 중 오류가 발생했습니다.",
+          "error"
+        );
+      }
+    }
+
+    async function loadRooms() {
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("rooms")
+        .select("*")
+        .order("id");
+
+      if (error) {
+        throw error;
+      }
+
+      state.rooms =
+        data || [];
+
+      roomSelect.innerHTML =
+        '<option value="">특별실을 선택하세요</option>';
+
+      state.rooms.forEach((room) => {
+        const option =
+          document.createElement("option");
+
+        option.value =
+          room.id;
+
+        option.textContent =
+          `${room.name} (${room.location})`;
+
+        roomSelect.appendChild(option);
+      });
+
+      const blockedRoomSelect =
+        document.getElementById("blockedRoomId");
+
+      blockedRoomSelect.innerHTML =
+        "";
+
+      state.rooms.forEach((room) => {
+        const option =
+          document.createElement("option");
+
+        option.value =
+          room.id;
+
+        option.textContent =
+          `${room.name} (${room.location})`;
+
+        blockedRoomSelect.appendChild(option);
+      });
+    }
+
+    async function loadReservationsAndBlockedSlots() {
+      const today =
+        getTodayString();
+
+      const threeMonthsLater =
+        getThreeMonthsLaterString();
+
+      const {
+        data: reservations,
+        error: reservationError
+      } = await supabaseClient
+        .from("reservations")
+        .select(`
+          *,
+          rooms (
+            name,
+            location
+          )
+        `)
+        .gte(
+          "reservation_date",
+          today
+        )
+        .lte(
+          "reservation_date",
+          threeMonthsLater
+        )
+        .order("reservation_date")
+        .order("period");
+
+      if (reservationError) {
+        throw reservationError;
+      }
+
+      const {
+        data: blockedSlots,
+        error: blockedError
+      } = await supabaseClient
+        .from("blocked_slots")
+        .select(`
+          *,
+          rooms (
+            name,
+            location
+          )
+        `)
+        .gte(
+          "blocked_date",
+          today
+        )
+        .lte(
+          "blocked_date",
+          threeMonthsLater
+        )
+        .order("blocked_date")
+        .order("blocked_period");
+
+      if (blockedError) {
+        throw blockedError;
+      }
+
+      state.reservations =
+        reservations || [];
+
+      state.blockedSlots =
+        blockedSlots || [];
+    }
+
+    async function handleReservationSubmit(event) {
+      event.preventDefault();
+
+      const roomId =
+        roomSelect.value;
+
+      const reservationDate =
+        dateInput.value;
+
+      const period =
+        Number(
+          document.getElementById("period").value
+        );
+
+      const teacherName =
+        document
+          .getElementById("teacherName")
+          .value
+          .trim();
+
+      const grade =
+        Number(
+          document
+            .getElementById("grade")
+            .value
+        );
+
+      const className =
+        document
+          .getElementById("className")
+          .value
+          .trim();
+
+      const purpose =
+        document
+          .getElementById("purpose")
+          .value
+          .trim();
+
+      const cancelPin =
+        document
+          .getElementById("cancelPin")
+          .value
+          .trim();
+
+      if (
+        !roomId ||
+        !reservationDate ||
+        !period ||
+        !teacherName ||
+        !grade ||
+        !className ||
+        !purpose ||
+        !cancelPin
+      ) {
+        showMessage(
+          "모든 항목을 입력해 주세요.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (!/^[0-9]{4}$/.test(cancelPin)) {
+        showMessage(
+          "취소용 PIN은 숫자 4자리여야 합니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (reservationDate < getTodayString()) {
+        showMessage(
+          "과거 날짜는 예약할 수 없습니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (
+        reservationDate >
+        getThreeMonthsLaterString()
+      ) {
+        showMessage(
+          "예약은 3개월 후까지 가능합니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      const blocked =
+        state.blockedSlots.find(
+          (slot) =>
+            String(slot.room_id) ===
+              String(roomId) &&
+            slot.blocked_date ===
+              reservationDate &&
+            Number(slot.blocked_period) ===
+              period
+        );
+
+      if (blocked) {
+        showMessage(
+          `관리자에 의해 예약이 차단된 시간입니다. 사유: ${blocked.reason}`,
+          "error"
+        );
+
+        return;
+      }
+
+      const {
+        data: existingReservation,
+        error: existingError
+      } = await supabaseClient
+        .from("reservations")
+        .select("id")
+        .eq("room_id", roomId)
+        .eq(
+          "reservation_date",
+          reservationDate
+        )
+        .eq("period", period)
+        .maybeSingle();
+
+      if (existingError) {
+        showMessage(
+          "기존 예약을 확인하지 못했습니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (existingReservation) {
+        showMessage(
+          "이미 예약된 시간입니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      const {
+        error
+      } = await supabaseClient
+        .from("reservations")
+        .insert({
+          room_id: Number(roomId),
+          reservation_date: reservationDate,
+          period,
+          teacher_name: teacherName,
+          grade,
+          class_name: className,
+          purpose,
+          cancel_pin: cancelPin
+        });
+
+      if (error) {
+        console.error(error);
+
+        if (error.code === "23505") {
+          showMessage(
+            "다른 사람이 먼저 예약한 시간입니다.",
+            "error"
+          );
+        } else {
+          showMessage(
+            `예약 중 오류가 발생했습니다: ${error.message}`,
+            "error"
+          );
+        }
+
+        return;
+      }
+
+      const room =
+        findRoom(roomId);
+
+      document
+        .getElementById("successText")
+        .innerHTML =
+          `<strong>${escapeHtml(room?.name || "")}</strong><br>
+           ${escapeHtml(reservationDate)} ·
+           ${period === 7 ? "방과후" : `${period}교시`}
+           예약이 완료되었습니다.`;
+
+      document
+        .getElementById("reservationForm")
+        .reset();
+
+      dateInput.min =
+        getTodayString();
+
+      dateInput.max =
+        getThreeMonthsLaterString();
+
+      dateInput.value =
+        reservationDate;
+
+      roomSelect.value =
+        roomId;
+
+      state.selectedRoomId =
+        roomId;
+
+      state.selectedDate =
+        reservationDate;
+
+      await loadReservationsAndBlockedSlots();
+
+      renderSchedule();
+      renderReservationList();
+
+      openModal("successModal");
+    }
+
+    async function handleDeleteReservation(reservationId) {
+      const pin =
+        window.prompt(
+          "예약할 때 입력한 취소용 PIN 4자리를 입력하세요."
+        );
+
+      if (pin === null) {
+        return;
+      }
+
+      if (!/^[0-9]{4}$/.test(pin)) {
+        showMessage(
+          "PIN은 숫자 4자리여야 합니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      const {
+        data: reservation,
+        error: selectError
+      } = await supabaseClient
+        .from("reservations")
+        .select("id, cancel_pin")
+        .eq("id", reservationId)
+        .maybeSingle();
+
+      if (
+        selectError ||
+        !reservation
+      ) {
+        showMessage(
+          "예약 정보를 찾지 못했습니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (reservation.cancel_pin !== pin) {
+        showMessage(
+          "취소용 PIN이 일치하지 않습니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      const confirmed =
+        window.confirm(
+          "이 예약을 취소하시겠습니까?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const {
+        error: deleteError
+      } = await supabaseClient
+        .from("reservations")
+        .delete()
+        .eq("id", reservationId)
+        .eq("cancel_pin", pin);
+
+      if (deleteError) {
+        showMessage(
+          "예약 취소 중 오류가 발생했습니다.",
+          "error"
+        );
+
+        return;
+      }
+
+      showMessage(
+        "예약이 취소되었습니다.",
+        "success"
+      );
+
+      await loadReservationsAndBlockedSlots();
+
+      renderSchedule();
+      renderReservationList();
+    }
+
+    function renderSchedule() {
+      const selectedRoom =
+        findRoom(state.selectedRoomId);
+
+      if (!selectedRoom) {
+        selectedRoomText.textContent =
+          "특별실을 선택하면 주간 예약 현황이 표시됩니다.";
+
+        scheduleBody.innerHTML =
+          `<tr>
+            <td colspan="6">
+              <div class="empty-message">
+                왼쪽에서 특별실을 선택해 주세요.
+              </div>
+            </td>
+          </tr>`;
+
+        return;
+      }
+
+      selectedRoomText.textContent =
+        `${selectedRoom.name} · ${selectedRoom.location}`;
+
+      const weekDates =
+        getMondayToFriday(
+          state.selectedDate
+        );
+
+      const rows = [];
+
+      for (
+        let period = 1;
+        period <= 7;
+        period += 1
+      ) {
+        const cells = [];
+
+        cells.push(
+          `<td class="period-cell">
+             ${period === 7 ? "방과후" : `${period}교시`}
+           </td>`
+        );
+
+        weekDates.forEach((date) => {
+          const isAfterSchool =
+            isAfterSchoolTime(
+              date,
+              period
+            );
+
+          const reservation =
+            findReservation(
+              state.selectedRoomId,
+              date,
+              period
+            );
+
+          const blocked =
+            findBlockedSlot(
+              state.selectedRoomId,
+              date,
+              period
+            );
+
+          let content = "";
+
+          if (blocked) {
+            content =
+              `<strong>예약 차단</strong>
+               <span>${escapeHtml(blocked.reason)}</span>`;
+
+            cells.push(
+              `<td class="${isAfterSchool ? "after-school-cell" : ""}">
+                 <div class="slot blocked-slot">
+                   ${content}
+                 </div>
+               </td>`
+            );
+
+            return;
+          }
+
+          if (reservation) {
+            content =
+              `<strong>${escapeHtml(reservation.teacher_name)}</strong>
+               <span>${escapeHtml(reservation.class_name)}</span>
+               <span>${escapeHtml(reservation.purpose)}</span>`;
+
+            cells.push(
+              `<td class="${isAfterSchool ? "after-school-cell" : ""}">
+                 <button
+                   type="button"
+                   class="slot"
+                   data-reservation-id="${reservation.id}"
+                 >
+                   ${content}
+                 </button>
+               </td>`
+            );
+
+            return;
+          }
+
+          content =
+            `<strong>예약 가능</strong>
+             <span>
+               ${isAfterSchool ? "정규수업 없음" : "예약 가능"}
+             </span>`;
+
+          cells.push(
+            `<td class="${isAfterSchool ? "after-school-cell" : ""}">
+               <div class="slot empty-slot">
+                 ${content}
+               </div>
+             </td>`
+          );
+        });
+
+        rows.push(
+          `<tr>${cells.join("")}</tr>`
+        );
+      }
+
+      scheduleBody.innerHTML =
+        rows.join("");
+
+      scheduleBody
+        .querySelectorAll(
+          "[data-reservation-id]"
+        )
+        .forEach((button) => {
+          button.addEventListener(
+            "click",
+            () => {
+              handleDeleteReservation(
+                Number(
+                  button.dataset.reservationId
+                )
+              );
+            }
+          );
+        });
+    }
+
+    function renderReservationList() {
+      if (!state.selectedRoomId) {
+        reservationList.innerHTML =
+          `<div class="empty-message">
+             특별실을 선택해 주세요.
+           </div>`;
+
+        return;
+      }
+
+      const reservations =
+        state.reservations.filter(
+          (reservation) =>
+            String(reservation.room_id) ===
+              String(state.selectedRoomId) &&
+            reservation.reservation_date ===
+              state.selectedDate
+        );
+
+      if (reservations.length === 0) {
+        reservationList.innerHTML =
+          `<div class="empty-message">
+             선택한 날짜에 예약이 없습니다.
+           </div>`;
+
+        return;
+      }
+
+      reservationList.innerHTML =
+        reservations
+          .map(
+            (reservation) =>
+              `<div class="reservation-item">
+                 <div class="reservation-info">
+                   <strong>
+                     ${
+                       reservation.period === 7
+                         ? "방과후"
+                         : `${reservation.period}교시`
+                     }
+                   </strong>
+                   ${escapeHtml(reservation.teacher_name)}
+                   ·
+                   ${escapeHtml(reservation.class_name)}
+                   <br />
+                   ${escapeHtml(reservation.purpose)}
+                 </div>
+
+                 <button
+                   type="button"
+                   class="small-danger"
+                   data-delete-list-id="${reservation.id}"
+                 >
+                   취소
+                 </button>
+               </div>`
+          )
+          .join("");
+
+      reservationList
+        .querySelectorAll(
+          "[data-delete-list-id]"
+        )
+        .forEach((button) => {
+          button.addEventListener(
+            "click",
+            () => {
+              handleDeleteReservation(
+                Number(
+                  button.dataset.deleteListId
+                )
+              );
+            }
+          );
+        });
+    }
+
+    async function handleAdminLogin() {
+      const pin =
+        document
+          .getElementById("adminPin")
+          .value
+          .trim();
+
+      if (pin !== ADMIN_PIN) {
+        document
+          .getElementById("adminStatus")
+          .textContent =
+          "관리자 PIN이 올바르지 않습니다.";
+
+        return;
+      }
+
+      state.isAdmin =
+        true;
+
+      document
+        .getElementById("adminStatus")
+        .textContent =
+        "관리자 인증이 완료되었습니다.";
+
+      document
+        .getElementById("adminControls")
+        .style.display =
+        "block";
+
+      document
+        .getElementById("blockedListSection")
+        .style.display =
+        "block";
+
+      await renderBlockedList();
+    }
+
+    async function handleAddBlockedSlot() {
+      if (!state.isAdmin) {
+        return;
+      }
+
+      const roomId =
+        document
+          .getElementById("blockedRoomId")
+          .value;
+
+      const blockedDate =
+        document
+          .getElementById("blockedDate")
+          .value;
+
+      const blockedPeriod =
+        Number(
+          document
+            .getElementById("blockedPeriod")
+            .value
+        );
+
+      const reason =
+        document
+          .getElementById("blockedReason")
+          .value
+          .trim();
+
+      if (
+        !roomId ||
+        !blockedDate ||
+        !blockedPeriod ||
+        !reason
+      ) {
+        window.alert(
+          "차단할 특별실, 날짜, 교시, 사유를 모두 입력해 주세요."
+        );
+
+        return;
+      }
+
+      if (blockedDate < getTodayString()) {
+        window.alert(
+          "과거 날짜는 차단할 수 없습니다."
+        );
+
+        return;
+      }
+
+      if (
+        blockedDate >
+        getThreeMonthsLaterString()
+      ) {
+        window.alert(
+          "차단 날짜는 3개월 후까지 등록할 수 있습니다."
+        );
+
+        return;
+      }
+
+      const {
+        error
+      } = await supabaseClient
+        .from("blocked_slots")
+        .insert({
+          room_id: Number(roomId),
+          blocked_date: blockedDate,
+          blocked_period: blockedPeriod,
+          reason
+        });
+
+      if (error) {
+        if (error.code === "23505") {
+          window.alert(
+            "이미 차단된 시간입니다."
+          );
+        } else {
+          window.alert(
+            `차단 등록 중 오류가 발생했습니다: ${error.message}`
+          );
+        }
+
+        return;
+      }
+
+      document
+        .getElementById("blockedReason")
+        .value =
+        "";
+
+      await loadReservationsAndBlockedSlots();
+      await renderBlockedList();
+
+      renderSchedule();
+      renderReservationList();
+
+      window.alert(
+        "예약 차단 시간이 등록되었습니다."
+      );
+    }
+
+    async function renderBlockedList() {
+      const blockedList =
+        document.getElementById("blockedList");
+
+      const futureBlockedSlots =
+        state.blockedSlots.filter(
+          (slot) =>
+            slot.blocked_date >=
+            getTodayString()
+        );
+
+      if (futureBlockedSlots.length === 0) {
+        blockedList.innerHTML =
+          `<div class="empty-message">
+             등록된 차단 시간이 없습니다.
+           </div>`;
+
+        return;
+      }
+
+      blockedList.innerHTML =
+        futureBlockedSlots
+          .map(
+            (slot) =>
+              `<div class="blocked-admin-item">
+                 <div>
+                   <strong>
+                     ${escapeHtml(slot.rooms?.name || "")}
+                   </strong>
+                   <br />
+                   ${escapeHtml(slot.blocked_date)}
+                   ·
+                   ${
+                     slot.blocked_period === 7
+                       ? "방과후"
+                       : `${slot.blocked_period}교시`
+                   }
+                   <br />
+                   ${escapeHtml(slot.reason)}
+                 </div>
+
+                 <button
+                   type="button"
+                   class="small-danger"
+                   data-delete-blocked-id="${slot.id}"
+                 >
+                   삭제
+                 </button>
+               </div>`
+          )
+          .join("");
+
+      blockedList
+        .querySelectorAll(
+          "[data-delete-blocked-id]"
+        )
+        .forEach((button) => {
+          button.addEventListener(
+            "click",
+            async () => {
+              await deleteBlockedSlot(
+                Number(
+                  button.dataset.deleteBlockedId
+                )
+              );
+            }
+          );
+        });
+    }
+
+    async function deleteBlockedSlot(id) {
+      const confirmed =
+        window.confirm(
+          "이 예약 차단을 삭제하시겠습니까?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const {
+        error
+      } = await supabaseClient
+        .from("blocked_slots")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        window.alert(
+          "차단 시간 삭제에 실패했습니다."
+        );
+
+        return;
+      }
+
+      await loadReservationsAndBlockedSlots();
+      await renderBlockedList();
+
+      renderSchedule();
+      renderReservationList();
+    }
+
+    function findRoom(roomId) {
+      return state.rooms.find(
+        (room) =>
+          String(room.id) ===
+          String(roomId)
+      );
+    }
+
+    function findReservation(
+      roomId,
+      date,
+      period
+    ) {
+      return state.reservations.find(
+        (reservation) =>
+          String(reservation.room_id) ===
+            String(roomId) &&
+          reservation.reservation_date ===
+            date &&
+          Number(reservation.period) ===
+            Number(period)
+      );
+    }
+
+    function findBlockedSlot(
+      roomId,
+      date,
+      period
+    ) {
+      return state.blockedSlots.find(
+        (slot) =>
+          String(slot.room_id) ===
+            String(roomId) &&
+          slot.blocked_date ===
+            date &&
+          Number(slot.blocked_period) ===
+            Number(period)
+      );
+    }
+
+    function getTodayString() {
+      const today =
+        new Date();
+
+      return formatDate(today);
+    }
+
+    function getThreeMonthsLaterString() {
+      const today =
+        new Date();
+
+      const threeMonthsLater =
+        new Date(
+          today.getFullYear(),
+          today.getMonth() + 3,
+          today.getDate()
+        );
+
+      return formatDate(
+        threeMonthsLater
+      );
+    }
+
+    function getMondayToFriday(
+      dateString
+    ) {
+      const date =
+        new Date(
+          `${dateString}T00:00:00`
+        );
+
+      const day =
+        date.getDay();
+
+      const difference =
+        day === 0
+          ? -6
+          : 1 - day;
+
+      const monday =
+        new Date(date);
+
+      monday.setDate(
+        date.getDate() + difference
+      );
+
+      return Array.from(
+        { length: 5 },
+        (_, index) => {
+          const nextDate =
+            new Date(monday);
+
+          nextDate.setDate(
+            monday.getDate() + index
+          );
+
+          return formatDate(
+            nextDate
+          );
+        }
+      );
+    }
+
+    function formatDate(date) {
+      const year =
+        date.getFullYear();
+
+      const month =
+        String(
+          date.getMonth() + 1
+        ).padStart(2, "0");
+
+      const day =
+        String(
+          date.getDate()
+        ).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    function isAfterSchoolTime(
+      dateString,
+      period
+    ) {
+      const date =
+        new Date(
+          `${dateString}T00:00:00`
+        );
+
+      const day =
+        date.getDay();
+
+      return (
+        (day === 1 && period === 7) ||
+        (day === 2 && period === 7) ||
+        (day === 3 &&
+          (period === 6 ||
+            period === 7)) ||
+        (day === 4 && period === 7) ||
+        (day === 5 && period === 7)
+      );
+    }
+
+    function showMessage(
+      text,
+      type
+    ) {
+      globalMessage.textContent =
+        text;
+
+      globalMessage.className =
+        `message show ${type}`;
+
+      window.setTimeout(
+        () => {
+          globalMessage.className =
+            "message";
+        },
+        4000
+      );
+    }
+
+    function openModal(id) {
+      document
+        .getElementById(id)
+        .classList
+        .add("show");
+    }
+
+    function closeModal(id) {
+      document
+        .getElementById(id)
+        .classList
+        .remove("show");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll(
+          "&",
+          "&amp;"
+        )
+        .replaceAll(
+          "<",
+          "&lt;"
+        )
+        .replaceAll(
+          ">",
+          "&gt;"
+        )
+        .replaceAll(
+          '"',
+          "&quot;"
+        )
+        .replaceAll(
+          "'",
+          "&#039;"
+        );
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
